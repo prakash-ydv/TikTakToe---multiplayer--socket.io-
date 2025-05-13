@@ -22,6 +22,11 @@ io.on("connection", (socket) => {
   let room_id = "room-" + roomNumber;
   if (curentPlayerLength <= MAX_LIMIT) {
     console.log("Player added to queue");
+    if (curentPlayerLength == 0) {
+      socket.emit("symbol", "O");
+    } else {
+      socket.emit("symbol", "X");
+    }
     socket.join(room_id);
     curentPlayerLength++;
     if (curentPlayerLength == MAX_LIMIT) {

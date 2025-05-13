@@ -7,19 +7,25 @@ import io from "socket.io-client";
 
 function Board() {
   const [state, setState] = useState(Array(9).fill(null));
-  const [xTurn, setXTurn] = useState(true);
+  const [turn, setTurn] = useState("O");
   const [isGameOver, setIsGameOver] = useState(false);
   const [winner, setWinner] = useState(null);
   const [winningCells, setWinningCells] = useState([]);
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [isPlayerFound, setIsPlayerFound] = useState(false);
   const [playerName, setPlayerName] = useState(null);
+  const [playerSymbol, setPlayerSymbol] = useState(null);
 
   const socket = useRef(null);
 
   useEffect(() => {
     if (!playerName) return;
     socket.current = io("http://localhost:4000");
+
+    socket.current.on("symbol", (symbol) => {
+      console.log("You are ", symbol);
+      setPlayerSymbol(symbol);
+    });
 
     socket.current.on("player-matched", () => {
       playerIsFound();
@@ -79,12 +85,16 @@ function Board() {
 
   //   click handler
   const clickHandler = (index) => {
+    if (playerSymbol != turn) return;
     if (state[index] == null && !isGameOver) {
-      let val = xTurn ? "X" : "O";
-      setXTurn(!xTurn);
+      let val = turn;
+      if (turn == "X") {
+        setTurn("O");
+      } else {
+        setTurn("X");
+      }
       let newArr = [...state];
       newArr[index] = val;
-
       setState(newArr);
     }
   };
