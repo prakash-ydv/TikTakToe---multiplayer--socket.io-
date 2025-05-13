@@ -31,7 +31,7 @@ io.on("connection", (socket) => {
     curentPlayerLength++;
     if (curentPlayerLength == MAX_LIMIT) {
       console.log("game stated for ", room_id);
-      io.to(room_id).emit("player-matched");
+      io.to(room_id).emit("player-matched", room_id);
       roomNumber++;
       curentPlayerLength = 0;
     }
@@ -39,6 +39,13 @@ io.on("connection", (socket) => {
   }
   console.log("connected", socket.id);
 
+  socket.on("player-moved", (data) => {
+    io.to(data.roomID).emit("move-reply", {
+      index: data.index,
+      symb: data.symb,
+      state: data.state,
+    });
+  });
   socket.on("disconnect", () => {
     console.log(socket.id, "Disconnected");
   });

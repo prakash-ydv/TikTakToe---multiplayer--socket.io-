@@ -14,6 +14,7 @@ function Board() {
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [isPlayerFound, setIsPlayerFound] = useState(false);
   const [playerName, setPlayerName] = useState(null);
+  const [roomId, setRoomId] = useState(null);
   const [playerSymbol, setPlayerSymbol] = useState(null);
 
   const socket = useRef(null);
@@ -27,9 +28,22 @@ function Board() {
       setPlayerSymbol(symbol);
     });
 
-    socket.current.on("player-matched", () => {
+    socket.current.on("player-matched", (id) => {
       playerIsFound();
+      setRoomId(id);
       console.log("starting...");
+    });
+
+    socket.current.on("move-reply", ({ index, symb, state }) => {
+      let newArr = [...state];
+      newArr[index] = symb;
+      setState(newArr);
+
+      if (symb == "X") {
+        setTurn("O");
+      } else {
+        setTurn("X");
+      }
     });
 
     return () => {};
@@ -87,15 +101,14 @@ function Board() {
   const clickHandler = (index) => {
     if (playerSymbol != turn) return;
     if (state[index] == null && !isGameOver) {
-      let val = turn;
-      if (turn == "X") {
-        setTurn("O");
-      } else {
-        setTurn("X");
+      if (turn == playerSymbol) {
+        socket.current.emit("player-moved", {
+          index: index,
+          roomID: roomId,
+          symb: playerSymbol,
+          state: state,
+        });
       }
-      let newArr = [...state];
-      newArr[index] = val;
-      setState(newArr);
     }
   };
 
