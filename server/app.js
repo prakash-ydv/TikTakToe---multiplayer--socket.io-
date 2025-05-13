@@ -17,8 +17,12 @@ let players = [];
 let roomNumber = 1;
 let MAX_LIMIT = 2;
 let curentPlayerLength = 0;
+let playerName = [];
 
 io.on("connection", (socket) => {
+  socket.on("player-name", (name) => {
+    playerName.push(name);
+  });
   let room_id = "room-" + roomNumber;
   if (curentPlayerLength <= MAX_LIMIT) {
     console.log("Player added to queue");
@@ -31,7 +35,9 @@ io.on("connection", (socket) => {
     curentPlayerLength++;
     if (curentPlayerLength == MAX_LIMIT) {
       console.log("game stated for ", room_id);
-      io.to(room_id).emit("player-matched", room_id);
+    //   let player1 = playerName[0];
+    //   let player2 = playerName[1];
+      io.to(room_id).emit("player-matched", { room_id, playerName });
       roomNumber++;
       curentPlayerLength = 0;
     }

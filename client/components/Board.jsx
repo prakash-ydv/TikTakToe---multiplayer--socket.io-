@@ -4,6 +4,8 @@ import Swal from "sweetalert2";
 import WaitingPage from "./WaitingPage";
 import StartPage from "./StartPage";
 import io from "socket.io-client";
+import ScoreBox from "./ScoreBox";
+import NameBox from "./NameBox";
 
 function Board() {
   const [state, setState] = useState(Array(9).fill(null));
@@ -14,8 +16,11 @@ function Board() {
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [isPlayerFound, setIsPlayerFound] = useState(false);
   const [playerName, setPlayerName] = useState(null);
+  const [secondPlayerName, setSecondPlayerName] = useState(null);
   const [roomId, setRoomId] = useState(null);
   const [playerSymbol, setPlayerSymbol] = useState(null);
+  const [playerXscore, setPlayerXscore] = useState(0);
+  const [playerOscore, setPlayerOscore] = useState(0);
 
   const socket = useRef(null);
 
@@ -23,14 +28,17 @@ function Board() {
     if (!playerName) return;
     socket.current = io("http://localhost:4000");
 
+    socket.current.emit("player-name", playerName);
+
     socket.current.on("symbol", (symbol) => {
       console.log("You are ", symbol);
       setPlayerSymbol(symbol);
     });
 
-    socket.current.on("player-matched", (id) => {
+    socket.current.on("player-matched", (data) => {
       playerIsFound();
-      setRoomId(id);
+      setRoomId(data.room_id);
+      setSecondPlayerName(data.playerName[1]);
       console.log("starting...");
     });
 
@@ -75,6 +83,7 @@ function Board() {
       if (state[a] != null && state[a] === state[b] && state[a] === state[c]) {
         setIsGameOver(true);
         setWinner(state[a]);
+        setScore(state[a]);
         setWinningCells([a, b, c]);
 
         resetBoard();
@@ -86,6 +95,14 @@ function Board() {
 
     return null;
   };
+
+  function setScore(player) {
+    if (player == "X") {
+      setPlayerXscore((prev) => prev + 1);
+    } else {
+      setPlayerOscore((prev) => prev + 1);
+    }
+  }
 
   // reset board game function
   function resetBoard(delay = 1500) {
@@ -146,6 +163,11 @@ function Board() {
           <>
             {/* main game board */}
             <div className="main-board">
+              <div className="flex items-center gap-10 w-full justify-between mb-10">
+                <NameBox name={playerName} />
+                <p className="text-4xl">VS</p>
+                <NameBox name={secondPlayerName} />
+              </div>
               <div className="flex">
                 {[0, 1, 2].map((element, key) => (
                   <Square
@@ -178,6 +200,12 @@ function Board() {
                     winner={winner}
                   />
                 ))}
+              </div>
+
+              {/* score boxes */}
+              <div className="flex items-center gap-10 w-full justify-between mt-10">
+                <ScoreBox playerSymb={"X"} score={playerXscore} />
+                <ScoreBox playerSymb={"O"} score={playerOscore} />
               </div>
             </div>
           </>
